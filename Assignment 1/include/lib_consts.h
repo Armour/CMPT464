@@ -24,7 +24,7 @@ namespace libconsts {
 const int kWindowPositionX = 0;
 const int kWindowPositionY = 0;
 const int kWindowSizeWidth = 1000;
-const int kWindowSizeHeight = 500;
+const int kWindowSizeHeight = 650;
 
 // Max number of vertex, faces and edges
 const int kMaxVertexNum = 200000;

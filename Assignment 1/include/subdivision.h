@@ -53,6 +53,9 @@ float LoopVertexMaskBeta(int k);
 // The butterfly subdivision
 void ButterflySubdivision(int level);
 
+// Calculate Sj for butterfly edge mask with k adjacent vertex
+float ButterflyVertexMaskSj(int k, int j);
+
 // Init mesh data for rendering
 void UpdateRenderMeshData();
 
