@@ -25,6 +25,7 @@
 #include "init_shader.h"
 #include "smf_parser.h"
 #include "subdivision.h"
+#include "decimation.h"
 
 using namespace std;
 
@@ -118,6 +119,10 @@ void StartSubdivision(void) {
 //
 
 void StartDecimation(void) {
+    std::cout << mesh_edges.size() / 2 << std::endl;
+    //if (mc_k > mesh_edges.size() / 2) return;
+    //if (mc_target >= mesh_edges.size() / 2) return;
+    decimation::QuadricMatricsDecimation(mc_k, mc_target);
 }
 
 //

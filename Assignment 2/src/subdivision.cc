@@ -23,15 +23,15 @@ namespace subdivision {
 // Subdivision mesh data
 vector<smfparser::Vertex *> old_mesh_vertex;     // The old vertex data that stored in memory
 vector<smfparser::Face *> old_mesh_faces;        // The old faces data that stored in memory
-map<pair<int, int>, smfparser::W_edge *> old_mesh_edges;     // The old edges data that stored in memory
-map<smfparser::Vertex *, GLuint> old_vertex_index_map;       // The old vertex index map
+map<pair<int, int>, smfparser::W_edge *> old_mesh_edges;        // The old edges data that stored in memory
+map<smfparser::Vertex *, GLuint> old_vertex_index_map;          // The old vertex index map
 
 vector<smfparser::Vertex *> new_mesh_vertex;     // The new vertex data that stored in memory
 vector<smfparser::Face *> new_mesh_faces;        // The new faces data that stored in memory
-map<pair<int, int>, smfparser::W_edge *> new_mesh_edges;     // The new edges data that stored in memory
-map<smfparser::Vertex *, GLuint> new_vertex_index_map;       // The new vertex index map
+map<pair<int, int>, smfparser::W_edge *> new_mesh_edges;        // The new edges data that stored in memory
+map<smfparser::Vertex *, GLuint> new_vertex_index_map;          // The new vertex index map
 
-map<pair<int, int>, GLuint> edge_midpoint_index_map;       // The subdivided edge midpoint index map
+map<pair<int, int>, GLuint> edge_midpoint_index_map;            // The subdivided edge midpoint index map
 vector<vector<float>> vertex_input;
 vector<vector<int>> face_input;
 

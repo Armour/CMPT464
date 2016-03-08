@@ -27,7 +27,26 @@
 
 using namespace std;
 
+extern vector<smfparser::Vertex *> mesh_vertex;     // The vertex data that stored in memory
+extern vector<smfparser::Face *> mesh_faces;        // The faces data that stored in memory
+extern map<pair<int, int>, smfparser::W_edge *> mesh_edges;     // The edges data that stored in memory
+extern map<smfparser::Vertex *, GLuint> vertex_index_map;       // The vertex index map
+extern vector<GLfloat> data_vertex;     // The vertex data used for rendering
+extern vector<GLuint> data_faces;       // The faces data used for rendering
+extern vector<GLuint> data_edges;       // The edges data used for rendering
+extern void UpdateMeshBufferData();
+
 namespace decimation {
+
+// Calculate K matrix for each face
+void CalculateAllFaceK(void);
+
+// Calculate Q matrix for each vertex
+void CalculateAllVertexQ(void);
+
+// The quadric error matrics decimation using multiple choice scheme
+void QuadricMatricsDecimation(int k, int target);
+
 } // namespace decimation
 
 #endif //SMFVIEW_DECIMATION_H_
