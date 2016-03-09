@@ -30,7 +30,7 @@ struct W_edge {
     Face *left, *right;
     W_edge *left_prev, *right_prev;
     W_edge *left_next, *right_next;
-    glm::float32 cost;
+    float cost;
     W_edge(Vertex *st, Vertex *ed): start(st), end(ed), cost(0) {        // Default constructor
         left = nullptr;
         right = nullptr;
@@ -43,17 +43,19 @@ struct W_edge {
 
 // Structure Vertex
 struct Vertex {
-    float x, y, z;
     W_edge *edge;
     glm::mat4x4 *Q;
-    Vertex(float x, float y, float z): x(x), y(y), z(z), edge(nullptr), Q(nullptr) {};         // Default constructor
+    float x, y, z;
+    int render_flag;
+    Vertex(float x, float y, float z): x(x), y(y), z(z), edge(nullptr), Q(nullptr), render_flag(0) {};         // Default constructor
 };
 
 // Structure Face
 struct Face {
     W_edge *edge;
     glm::mat4x4 *K;
-    Face(): edge(nullptr), K(nullptr) {};      // Default constructor
+    int render_flag;
+    Face(): edge(nullptr), K(nullptr), render_flag(0) {};      // Default constructor
 };
 
 } // namespace smfparser

@@ -38,8 +38,8 @@ int mesh_imported = libconsts::kMeshImportedFalse;      // The mesh import flag 
 int subdivision_type = libconsts::kSubdivisionLoop;     // Subdivision type
 int subdivision_level = 0;                              // Subdivision level
 int colorful = 0;   // The flag indicate rendering color or not
-int mc_k = 6;       // The k value used in multiple choice scheme
-int mc_target = 6;  // The target edge number that you want to collapse to
+int mc_k = 8;       // The k value used in multiple choice scheme
+int mc_target = 3;  // The target edge number that you want to collapse to
 
 // Variables in GLUI
 GLUI_String file_path = "test.smf";      // The string of file path
@@ -119,9 +119,6 @@ void StartSubdivision(void) {
 //
 
 void StartDecimation(void) {
-    std::cout << mesh_edges.size() / 2 << std::endl;
-    //if (mc_k > mesh_edges.size() / 2) return;
-    //if (mc_target >= mesh_edges.size() / 2) return;
     decimation::QuadricMatricsDecimation(mc_k, mc_target);
 }
 

@@ -38,14 +38,35 @@ extern void UpdateMeshBufferData();
 
 namespace decimation {
 
+// Calculate K matrix for one face
+void CalculateFaceK(smfparser::Face *face);
+
 // Calculate K matrix for each face
 void CalculateAllFaceK(void);
+
+// Calculate Q matrix for one vertex
+void CalculateVertexQ(smfparser::Vertex *vertex);
 
 // Calculate Q matrix for each vertex
 void CalculateAllVertexQ(void);
 
+// Calculate vertex for one pair
+glm::vec4 CalculatePairVertex(smfparser::W_edge *pair);
+
+// Calculate cost for one pair
+float CalculatePairCost(smfparser::W_edge *pair);
+
+// Get the pair that need collapse using Multiple-Choice algorithm
+smfparser::W_edge *MultipleChoice(int k);
+
+// Do edge contraction on specific pair
+void EdgeContractionOnPair(smfparser::W_edge *pair);
+
 // The quadric error matrics decimation using multiple choice scheme
 void QuadricMatricsDecimation(int k, int target);
+
+// Update mesh data for rendering
+void UpdateRenderMeshData(void);
 
 } // namespace decimation
 

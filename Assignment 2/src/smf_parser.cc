@@ -118,8 +118,7 @@ void ImportMeshFile() {
         mesh_edges.clear();
         mesh_faces.clear();
 
-        while (!fin.eof()) {        // While not end of file
-            if (!getline(fin, line).good()) break;
+        while (getline(fin, line)) {        // While not end of file
             TrimLeadingSpace(line);
             if (line[0] == '#') continue;       // If is comment
             if (line[0] == 'f') flag = libconsts::kFlagFace;
@@ -223,20 +222,36 @@ void ExportMeshFile() {
             return;
         }
 
-        fout << "# " << mesh_vertex.size() << " " << mesh_faces.size() << endl;     // The vertex size and faces size information
+        int extra_vertex = 0;
+        int extra_face = 0;
+        vector<int> extra_prefix;
+
+        for (auto vertex : mesh_vertex) {
+            if (vertex->render_flag == 1) extra_vertex++;
+            extra_prefix.push_back(extra_vertex);
+        }
+        for (auto face : mesh_faces)
+            if (face->render_flag == 1) extra_face++;
+
+        // The vertex size and faces size
+        fout << "# " << mesh_vertex.size() - extra_vertex << " " << mesh_faces.size() - extra_face << endl;
+
+        // information
         fout << "# Created by Armour on 2016" << endl;
         fout << "# Copyright (c) 2016 Armour. All rights reserved." << endl;
 
         for (auto vertex : mesh_vertex) {
+            if (vertex->render_flag == 1) continue;
             fout << "v " << vertex->x << " " << vertex->y << " " << vertex->z << endl;      // The vertex data
         }
 
         for (auto face : mesh_faces) {
+            if (face->render_flag == 1) continue;
             smfparser::W_edge *e0 = face->edge;
             smfparser::W_edge *edge = e0;
             fout << "f";
             do {
-                fout << " " << vertex_index_map[edge->start] + 1;           // The faces data
+                fout << " " << vertex_index_map[edge->start] + 1 - extra_prefix[vertex_index_map[edge->start]];      // The faces data
                 if (edge->left == face)
                     edge = edge->left_next;
                 else
