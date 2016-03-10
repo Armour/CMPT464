@@ -39,10 +39,6 @@ const int kSubdivisionButterfly = 1;
 const int kFlagVertex = 0;
 const int kFlagFace = 1;
 
-// Flag indicate if the pair has been chosen
-const int kFlagPairNotChoose = 0;
-const int kFlagPairChosed = 1;
-
 // Import and export semaphore
 const int kImportLockOff = 0;
 const int kImportLockOn = 1;

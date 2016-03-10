@@ -54,7 +54,7 @@ void CalculateAllVertexQ(void);
 glm::vec4 CalculatePairVertex(smfparser::W_edge *pair);
 
 // Calculate cost for one pair
-float CalculatePairCost(smfparser::W_edge *pair);
+void CalculatePairCost(smfparser::W_edge *pair);
 
 // Get the pair that need collapse using Multiple-Choice algorithm
 smfparser::W_edge *MultipleChoice(int k);

@@ -35,20 +35,32 @@ namespace decimation {
 
 void CalculateFaceK(smfparser::Face *face) {
     if (face->render_flag == 1) return;
-    glm::vec3 v1 = glm::vec3(face->edge->start->x, face->edge->start->y, face->edge->start->z);
-    glm::vec3 v2 = glm::vec3(face->edge->end->x, face->edge->end->y, face->edge->end->z);
-    glm::vec3 v3 = glm::vec3(face->edge->left_next->end->x, face->edge->left_next->end->y, face->edge->left_next->end->z);
+    smfparser::W_edge *edge = face->edge;
+    if (edge->left != face) edge = edge->right_next->left_prev;
+    glm::vec3 v1 = glm::vec3(edge->start->x, edge->start->y, edge->start->z);
+    glm::vec3 v2 = glm::vec3(edge->end->x, edge->end->y, edge->end->z);
+    glm::vec3 v3 = glm::vec3(edge->left_next->end->x, edge->left_next->end->y, edge->left_next->end->z);
     glm::vec3 cross = glm::normalize(glm::cross(v3 - v1, v2 - v1));         // Get the normal of the plane
     float a = cross.x;
     float b = cross.y;
     float c = cross.z;
     float d = -(v1.x * a + v1.y * b + v1.z * c);
+    if (face->K != nullptr) delete(face->K);
     face->K = new glm::mat4x4(              // Get K matrix
             a * a, a * b, a * c, a * d,
             a * b, b * b, b * c, b * d,
             a * c, b * c, c * c, c * d,
             a * d, b * d, c * d, d * d
     );
+    /*
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            std::cout << (*face->K)[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    */
 }
 
 //
@@ -86,16 +98,20 @@ void CalculateAllFaceK(void) {
 
 void CalculateVertexQ(smfparser::Vertex *vertex) {
     if (vertex->render_flag == 1) return;
+    if (vertex->Q != nullptr) delete(vertex->Q);
     vertex->Q = new glm::mat4x4(0.0);
     smfparser::W_edge *e0 = vertex->edge;
-    smfparser::W_edge *e1 = mesh_edges[make_pair(vertex_index_map[vertex->edge->end] + 1, vertex_index_map[vertex->edge->start] + 1)];
+    smfparser::W_edge *e1 = mesh_edges[make_pair(vertex_index_map[vertex->edge->end] + 1,
+                                                 vertex_index_map[vertex->edge->start] + 1)];
     smfparser::W_edge *edge = e0;
     do {
-        if (edge->end == vertex)
+        if (edge->end == vertex) {
+            *(vertex->Q) = *(vertex->Q) + *(edge->left->K);
             edge = edge->right_prev;
-        else
+        } else {
+            *(vertex->Q) = *(vertex->Q) + *(edge->right->K);
             edge = edge->left_prev;
-        *(vertex->Q) = *(vertex->Q) + *(edge->left->K);
+        }
     } while (edge != e0 && edge != e1);
 }
 
@@ -134,10 +150,27 @@ void CalculateAllVertexQ(void) {
 
 glm::vec4 CalculatePairVertex(smfparser::W_edge *pair) {
     glm::mat4x4 Q = *(pair->start->Q) + *(pair->end->Q);
-    Q[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    glm::mat4x4 inverseQ = glm::inverse(Q);
-    return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) * inverseQ;
-}
+    glm::mat4x4 tmp = Q;
+    tmp[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    glm::mat4x4 inverseQ = glm::inverse(tmp);
+    if (glm::isnan(inverseQ[0][0])) {
+        std::cout << "Got nan !!!!!!!!!!!!!!!!" << std::endl;
+        glm::vec4 v1 = glm::vec4(pair->start->x, pair->start->y, pair->start->z, 1.0);
+        glm::vec4 v2 = glm::vec4(pair->end->x, pair->end->y, pair->end->z, 1.0);
+        glm::vec4 vm = glm::vec4((v1.x + v2.x) / 2, (v1.y + v2.y) / 2, (v1.z + v2.z) / 2, 1.0);
+        glm::vec4 costv1 = v1 * Q * v1;
+        glm::vec4 costv2 = v2 * Q * v2;
+        glm::vec4 costvm = vm * Q * vm;
+        float cost1 = costv1.x + costv1.y + costv1.z + costv1.w;
+        float cost2 = costv2.x + costv2.y + costv2.z + costv2.w;
+        float costm = costvm.x + costvm.y + costvm.z + costvm.w;
+        if (cost1 <= cost2 && cost1 <= costm) return costv1;
+        if (cost2 <= cost1 && cost2 <= costm) return costv2;
+        return costvm;
+    } else {
+        return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) * inverseQ;
+    }
+ }
 
 //
 // Function:  CalculatePairCost
@@ -149,14 +182,26 @@ glm::vec4 CalculatePairVertex(smfparser::W_edge *pair) {
 //       pair: the pair the we need to calculate cost
 //
 //   Returns:
-//       the cost of this pair
+//       void
 //
 
-float CalculatePairCost(smfparser::W_edge *pair) {
+void CalculatePairCost(smfparser::W_edge *pair) {
     glm::mat4x4 Q = *(pair->start->Q) + *(pair->end->Q);
     glm::vec4 v = CalculatePairVertex(pair);
+    std::cout << "v:" << std::endl;
+    std::cout << v.x << " " << v.y << " " << v.z << " " << v.w << std::endl;
+    std::cout << "Q:" << std::endl;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            std::cout << Q[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "cost:" << std::endl;
     glm::vec4 costv = v * Q * v;
-    return costv.x + costv.y + costv.z + costv.w;
+    std::cout << costv.x << " " << costv.y << " " << costv.z << " " << costv.w << std::endl;
+    std::cout << std::endl;
+    pair->cost = costv.x + costv.y + costv.z + costv.w;
 }
 
 //
@@ -177,30 +222,47 @@ smfparser::W_edge *MultipleChoice(int k) {
     srand((unsigned int)time(0));
 
     // Clamp k value
-    if (k > mesh_edges.size() / 2)
-        k = mesh_edges.size() / 2;
-    std::cout << "K: " << k << std::endl;
+    if (k > mesh_edges.size())
+        k = mesh_edges.size();
 
     // Multiple Choice
     vector<smfparser::W_edge *> chosen_pairs;
+    smfparser::W_edge *edge;
     for (int i = 0; i < k; i++) {
         int r1, r2;
+        int time = 0;
         do {
-            r1 = rand() % mesh_vertex.size();
-            r2 = rand() % mesh_vertex.size();
-            if (mesh_edges.find(make_pair(r1, r2)) != mesh_edges.end()) break;
+            time++;
+            if (time >= 50000000) break;
+            r1 = rand() % mesh_vertex.size() + 1;
+            r2 = rand() % mesh_vertex.size() + 1;
+            if (r1 == r2) continue;
+            if (mesh_edges.find(make_pair(r1, r2)) != mesh_edges.end()) {
+                edge = mesh_edges[make_pair(r1, r2)];
+                if (edge->left_prev->start == edge->right_next->end) continue;
+                if (edge->left_prev->right_next->end == edge->left_next->right_next->end) continue;
+                if (edge->right_prev->right_next->end == edge->right_next->right_next->end) continue;
+                break;
+            }
         } while (true);
-        mesh_edges[make_pair(r1, r2)]->cost = CalculatePairCost(mesh_edges[make_pair(r1, r2)]);
-        chosen_pairs.push_back(mesh_edges[make_pair(r1, r2)]);
+        if (time != 50000000) {
+            CalculatePairCost(edge);
+            chosen_pairs.push_back(edge);
+        }
     }
 
     // Get least cost
     smfparser::W_edge *least_cost_pair;
+    if (chosen_pairs.empty()) return nullptr;
+    std::cout << "Size: " << chosen_pairs.size() << std::endl;
     least_cost_pair = chosen_pairs[0];
     for (int i = 1; i < chosen_pairs.size(); i++) {
         if (chosen_pairs[i]->cost < least_cost_pair->cost)
             least_cost_pair = chosen_pairs[i];
+        std::cout << chosen_pairs[i]->cost << " ";
     }
+    std::cout << std::endl;
+    std::cout << least_cost_pair->cost << std::endl;
 
     return least_cost_pair;
 }
@@ -221,11 +283,16 @@ smfparser::W_edge *MultipleChoice(int k) {
 void EdgeContractionOnPair(smfparser::W_edge *pair) {
     smfparser::Vertex *v1 = pair->start;
     smfparser::Vertex *v2 = pair->end;
+    smfparser::Vertex *v_up = pair->left_prev->start;
+    smfparser::Vertex *v_down = pair->right_next->end;
+
+    std::cout << vertex_index_map[pair->start] + 1 << "->" << vertex_index_map[pair->end] + 1 << std::endl;
+
+    int v1_index = vertex_index_map[v1] + 1;
+    int v2_index = vertex_index_map[v2] + 1;
+    int v_up_index = vertex_index_map[v_up] + 1;
+    int v_down_index = vertex_index_map[v_down] + 1;
     glm::vec4 v = CalculatePairVertex(pair);
-    int v1_index = vertex_index_map[v1];
-    int v2_index = vertex_index_map[v2];
-    int v_up_index = vertex_index_map[pair->left_prev->start];
-    int v_down_index = vertex_index_map[pair->right_next->end];
 
     // Get the edges that need to update prev and next before change them
     smfparser::W_edge *edgel0 = pair->left_prev->right_next->left_prev;
@@ -240,8 +307,8 @@ void EdgeContractionOnPair(smfparser::W_edge *pair) {
 
     // Update vertex edge
     v1->edge = edgel0;
-    pair->left_prev->start->edge = edger0;
-    pair->right_next->end->edge = edgel1;
+    v_up->edge = edger0;
+    v_down->edge = edgel1;
 
     // Update edge face
     edgel0->right = edger0->left;
@@ -257,7 +324,7 @@ void EdgeContractionOnPair(smfparser::W_edge *pair) {
     v2->render_flag = 1;
 
     // Update edges vertex
-    smfparser::W_edge *e0 = mesh_edges[make_pair(v2_index + 1, v1_index + 1)];
+    smfparser::W_edge *e0 = mesh_edges[make_pair(v2_index, v1_index)];
     smfparser::W_edge *e1 = pair;
     smfparser::W_edge *edge = e0;
     do {
@@ -265,29 +332,23 @@ void EdgeContractionOnPair(smfparser::W_edge *pair) {
             smfparser::W_edge *next_edge = edge->right_prev;
             edge->end = v1;
             edge->right_next->left_prev->start = v1;
-            int start_index = vertex_index_map[edge->start];
-            int end_index = vertex_index_map[edge->end];
+            int start_index = vertex_index_map[edge->start] + 1;
+            int end_index = vertex_index_map[edge->end] + 1;
             if (start_index == v_down_index) {
-                //delete mesh_edges[make_pair(end_index + 1, start_index + 1)];
-                mesh_edges[make_pair(end_index + 1, start_index + 1)] = edge->right_next->left_prev;
-                //delete edge;
+                mesh_edges[make_pair(end_index, start_index)] = edge->right_next->left_prev;
             } else if (start_index == v_up_index) {
-                //delete mesh_edges[make_pair(start_index + 1, end_index + 1)];
-                mesh_edges[make_pair(start_index + 1, end_index + 1)] = edge;
-                //delete edge->right_next->left_prev;
+                mesh_edges[make_pair(start_index, end_index)] = edge;
             } else {
-                mesh_edges[make_pair(start_index + 1, end_index + 1)] = edge;
-                mesh_edges[make_pair(end_index + 1, start_index + 1)] = edge->right_next->left_prev;
+                mesh_edges[make_pair(start_index, end_index)] = edge;
+                mesh_edges[make_pair(end_index, start_index)] = edge->right_next->left_prev;
             }
-            mesh_edges.erase(make_pair(start_index + 1, v2_index + 1));
-            mesh_edges.erase(make_pair(v2_index + 1, start_index + 1));
+            mesh_edges.erase(make_pair(start_index, v2_index));
+            mesh_edges.erase(make_pair(v2_index, start_index));
             edge = next_edge;
         } else {
+            mesh_edges.erase(make_pair(v1_index, v2_index));
+            mesh_edges.erase(make_pair(v2_index, v1_index));
             edge = edge->left_prev;
-            //delete mesh_edges[make_pair(v1_index + 1, v2_index + 1)];
-            //delete mesh_edges[make_pair(v2_index + 1, v1_index + 1)];
-            mesh_edges.erase(make_pair(v1_index + 1, v2_index + 1));
-            mesh_edges.erase(make_pair(v2_index + 1, v1_index + 1));
         }
     } while (edge != e0 && edge != e1);
 
@@ -308,10 +369,12 @@ void EdgeContractionOnPair(smfparser::W_edge *pair) {
     edger1->left->edge = edger1;
 
     // Update face K matrix and vertex Q matrix
+
     e0 = v1->edge;
     e1 = mesh_edges[make_pair(vertex_index_map[v1->edge->end] + 1, vertex_index_map[v1->edge->start] + 1)];
     edge = e0;
     do {
+        std::cout << "!?" << vertex_index_map[edge->start] + 1 << " to " << vertex_index_map[edge->end] + 1 << std::endl;
         if (edge->end == v1) {
             CalculateFaceK(edge->left);
             CalculateVertexQ(edge->start);
@@ -345,6 +408,7 @@ void QuadricMatricsDecimation(int k, int target) {
     for (int i = 0; i < target; i++) {
         if (mesh_edges.size() / 2 <= 6) break;
         smfparser::W_edge *pair = MultipleChoice(k);
+        if (pair == nullptr) continue;
         EdgeContractionOnPair(pair);
     }
     UpdateRenderMeshData();

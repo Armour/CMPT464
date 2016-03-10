@@ -30,7 +30,7 @@
 using namespace std;
 
 int main_win;       // The id of main window
-int mesh_type = libconsts::kMeshTypeFlatShaded;         // The type of mesh display
+int mesh_type = libconsts::kMeshTypeShadedEdges;        // The type of mesh display
 int import_semaphore = libconsts::kImportLockOff;       // Import semaphore
 int export_semaphore = libconsts::kExportLockOff;       // Export semaphore
 int subdivision_semaphore = libconsts::kSubdivisionLockOff;       // Subdivision semaphore
@@ -38,11 +38,11 @@ int mesh_imported = libconsts::kMeshImportedFalse;      // The mesh import flag 
 int subdivision_type = libconsts::kSubdivisionLoop;     // Subdivision type
 int subdivision_level = 0;                              // Subdivision level
 int colorful = 0;   // The flag indicate rendering color or not
-int mc_k = 8;       // The k value used in multiple choice scheme
-int mc_target = 3;  // The target edge number that you want to collapse to
+int mc_k = 10000;       // The k value used in multiple choice scheme
+int mc_target = 1;  // The target edge number that you want to collapse to
 
 // Variables in GLUI
-GLUI_String file_path = "test.smf";      // The string of file path
+GLUI_String file_path = "eight.smf";      // The string of file path
 GLUI *gluiRight;            // The GLUI on right
 GLUI *gluiBot;              // The GLUI on bottom
 GLUI_Spinner *spinner;      // The spinner for controller subdivision level
