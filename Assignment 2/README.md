@@ -1,9 +1,6 @@
 # ASSIGNMENT 2
+
 #### Chong Guo armourg@sfu.ca
-
-## Not Finished Features
-
-- None
 
 ## File Structure
 
@@ -13,12 +10,14 @@
     - init_shader.cc -- Used to read shader
     - smf_parser.cc -- Used to import and export smf file
     - subdivision.cc -- Uesd to do the loop and butterfly subdivision
+    - **decimation.cc** -- Uesd to do the mesh decimation
 
 - include -- the header file folder
 
     - winged_edge.h -- Declare winged edge data structure
     - smf_parser.h -- Used to import and export smf file
     - subdivision.h -- Uesd to do the loop and butterfly subdivision
+    - **decimation.h** -- Uesd to do the mesh decimation
     - init_shader.h -- Used to read shader
     - lib_consts.h -- Constant variables header
     - lib_gl.h -- Include GL related header
@@ -40,14 +39,14 @@
     - Manual compile
         - `cmake .` (Optional)
         - `make`
-        - `./smf_view`
+        - `./mcaq`
         
 - Ubuntu
     - Use `Clion`
     - Manual compile
         - `cmake .` (Optional)
         - `make`
-        - `./smf_view` 
+        - `./mcaq` 
 
 - Put all your mesh data in `mesh` folder, and input file name only (with extension)
 
@@ -64,7 +63,8 @@
 * `t`: change subdivision type
 * `<`: decrease subdivision level
 * `>`: increase subdivision level
-* `?`: run subdivision
+* `s`: **run subdivision**
+* `d`: **run decimation**
 * `q`: exit
 * Ps: sometime program has no response to key press, you should click GUI and then click display window, after that the key press should works well. (Seems to be a bug of GLUI?)
 
@@ -72,77 +72,8 @@
 
 - Cross platform (Clion + Cmake)
 - Following Google C++ Style, well commented
-- Subdivision Time complexicity
-    - $O(nlogn)$ 
-    - Used C++ `map` 
 
-##Screen Shots
+## Limitation
 
-- Mac
-
-![](images/M1.jpg)
-
-![](images/M2.jpg)
-
-![](images/M3.jpg)
-
-![](images/M4.jpg)
-
-![](images/M5.jpg)
-
-![](images/M6.jpg)
-
-![](images/M7.jpg)
-
-![](images/M8.jpg)
-
-![](images/M9.jpg)
-
-- Ubuntu
-
-![](images/U1.png)
-
-![](images/U2.png)
-
-![](images/U3.png)
-
-![](images/U4.png)
-
-![](images/U5.png)
-
-![](images/U6.png)
-
-![](images/U7.png)
-
-![](images/U8.png)
-
-![](images/U9.png)
-
-- Loop Subdivision (level 0 - 5)
-
-![](images/L0.png)
-
-![](images/L1.png)
-
-![](images/L2.png)
-
-![](images/L3.png)
-
-![](images/L4.png)
-
-![](images/L5.png)
-
-- Butterfly Subdivision (level 0 - 5)
-
-![](images/B0.png)
-
-![](images/B1.png)
-
-![](images/B2.png)
-
-![](images/B3.png)
-
-![](images/B4.png)
-
-![](images/B5.png)
-
+- Not check fold-over
+- Subdivision and decimation can not work together now (easy to fix)

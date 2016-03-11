@@ -266,8 +266,8 @@ smfparser::W_edge *MultipleChoice(int k) {
     srand((unsigned int)time(0));
 
     // Clamp k value
-    if (k > mesh_edges.size())
-        k = mesh_edges.size();
+    if (k > (int)mesh_edges.size())
+        k = (int)mesh_edges.size();
 
     // Multiple Choice
     vector<smfparser::W_edge *> chosen_pairs;
