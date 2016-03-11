@@ -42,7 +42,7 @@ int mc_k = 10000;       // The k value used in multiple choice scheme
 int mc_target = 1;  // The target edge number that you want to collapse to
 
 // Variables in GLUI
-GLUI_String file_path = "eight.smf";      // The string of file path
+GLUI_String file_path = "eight6.smf";      // The string of file path
 GLUI *gluiRight;            // The GLUI on right
 GLUI *gluiBot;              // The GLUI on bottom
 GLUI_Spinner *spinner;      // The spinner for controller subdivision level

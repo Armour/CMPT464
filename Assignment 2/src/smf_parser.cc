@@ -120,7 +120,8 @@ void ImportMeshFile() {
 
         while (getline(fin, line)) {        // While not end of file
             TrimLeadingSpace(line);
-            if (line[0] == '#') continue;       // If is comment
+            if (line.compare("") == 0) continue;    // If is blank line
+            if (line[0] == '#') continue;           // If is comment
             if (line[0] == 'f') flag = libconsts::kFlagFace;
             line.erase(0, 2);
             TrimTailingSpace(line);
@@ -239,6 +240,7 @@ void ExportMeshFile() {
         // information
         fout << "# Created by Armour on 2016" << endl;
         fout << "# Copyright (c) 2016 Armour. All rights reserved." << endl;
+        fout << endl;
 
         for (auto vertex : mesh_vertex) {
             if (vertex->render_flag == 1) continue;

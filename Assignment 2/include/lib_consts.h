@@ -35,6 +35,10 @@ const int kMaxEdgeNum = kMaxVertexNum * 3;
 const int kSubdivisionLoop = 0;
 const int kSubdivisionButterfly = 1;
 
+// Decimation flag
+const int kDecimationFlagRun  = 0;
+const int kDecimationFlagStop = 1;
+
 // Flag indicate input is vertex or face data
 const int kFlagVertex = 0;
 const int kFlagFace = 1;

@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 
 #include "lib_gl.h"
 #include "lib_consts.h"
@@ -55,6 +56,9 @@ glm::vec4 CalculatePairVertex(smfparser::W_edge *pair);
 
 // Calculate cost for one pair
 void CalculatePairCost(smfparser::W_edge *pair);
+
+// Check the choice of pair
+bool CheckChoice(smfparser::W_edge *pair);
 
 // Get the pair that need collapse using Multiple-Choice algorithm
 smfparser::W_edge *MultipleChoice(int k);
