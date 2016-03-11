@@ -34,15 +34,16 @@ int mesh_type = libconsts::kMeshTypeShadedEdges;        // The type of mesh disp
 int import_semaphore = libconsts::kImportLockOff;       // Import semaphore
 int export_semaphore = libconsts::kExportLockOff;       // Export semaphore
 int subdivision_semaphore = libconsts::kSubdivisionLockOff;       // Subdivision semaphore
+int decimation_semaphore = libconsts::kDecimationLockOff;         // Decimation semaphore
 int mesh_imported = libconsts::kMeshImportedFalse;      // The mesh import flag (for display)
 int subdivision_type = libconsts::kSubdivisionLoop;     // Subdivision type
 int subdivision_level = 0;                              // Subdivision level
 int colorful = 0;   // The flag indicate rendering color or not
-int mc_k = 10000;       // The k value used in multiple choice scheme
-int mc_target = 1;  // The target edge number that you want to collapse to
+int decimation_k = 8;           // The k value used in multiple choice scheme
+int decimation_iteration = 1;   // The iteration of decimation
 
 // Variables in GLUI
-GLUI_String file_path = "eight6.smf";      // The string of file path
+GLUI_String file_path = "eight.smf";      // The string of file path
 GLUI *gluiRight;            // The GLUI on right
 GLUI *gluiBot;              // The GLUI on bottom
 GLUI_Spinner *spinner;      // The spinner for controller subdivision level
@@ -73,14 +74,14 @@ GLuint is_colorful;
 GLuint is_smooth;
 
 // VAO and VBO
-GLuint vao_IDs[2]; // VAO for each object: one for solid, one for wireframe
-GLuint vbo_IDs[2]; // Vertex Buffer Object for each VAO (specifying vertex positions and colors)
-GLuint ebo_IDs[2]; // Element Array Buffer Object for each VAO (one for solid, one for wireframe)
+GLuint vao_IDs[2];      // VAO for each object: one for solid, one for wireframe
+GLuint vbo_IDs[2];      // Vertex Buffer Object for each VAO (specifying vertex positions and colors)
+GLuint ebo_IDs[2];      // Element Array Buffer Object for each VAO (one for solid, one for wireframe)
 
 // The rotation and position that changed by GLUI controller
 GLfloat lights_rotation[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
 GLfloat object_rotation[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-GLfloat object_position[3] = {0,0,0};
+GLfloat object_position[3]  = {0,0,0};
 
 //
 // Function: StartSubdivision
@@ -96,10 +97,10 @@ GLfloat object_position[3] = {0,0,0};
 //
 
 void StartSubdivision(void) {
-    if (subdivision_semaphore != libconsts::kSubdivisionLockOn) {
-        if (subdivision_type == libconsts::kSubdivisionLoop) {
+    if (subdivision_semaphore != libconsts::kSubdivisionLockOn) {       // Check subdivision semaphore
+        if (subdivision_type == libconsts::kSubdivisionLoop) {          // Do loop subdivision
             subdivision::LoopSubdivision(subdivision_level);
-        } else if (subdivision_type == libconsts::kSubdivisionButterfly) {
+        } else if (subdivision_type == libconsts::kSubdivisionButterfly) {      // Do butterfly subdivision
             subdivision::ButterflySubdivision(subdivision_level);
         }
     }
@@ -119,7 +120,11 @@ void StartSubdivision(void) {
 //
 
 void StartDecimation(void) {
-    decimation::QuadricMatricsDecimation(mc_k, mc_target);
+    if (decimation_semaphore != libconsts::kDecimationLockOn) {         // Check subdivision semaphore
+        decimation_semaphore = libconsts::kDecimationLockOn;
+        decimation::QuadricMatricsDecimation(decimation_k, decimation_iteration);          // Do quadric error matrics based decimation
+        decimation_semaphore = libconsts::kDecimationLockOff;
+    }
 }
 
 //
@@ -136,8 +141,8 @@ void StartDecimation(void) {
 //
 
 void UpdateMVP() {
-    // Projection matrix : 45 degree Field of View, 4:3 ratio, display range 0.01 unit - 100 units
-    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.01f, 100.0f);
+    // Projection matrix : 45 degree Field of View, 4:3 ratio, display range 0.05 unit - 100 units
+    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.05f, 100.0f);
 
     // Camera matrix
     glm::mat4 View = glm::lookAt(
@@ -193,6 +198,7 @@ void UpdateMeshBufferData() {
     // Update edges text display
     std::string s = "Current mesh edges: ";
     s += to_string(data_edges.size() / 4);
+    s += " ";
     staticText->set_text(s.c_str());
 }
 
@@ -313,6 +319,7 @@ void DisplayFunc(void) {
             glDrawElements(GL_LINES, data_edges.size(), GL_UNSIGNED_INT, 0);
         } else {                                                            // Solid + wire frame
             glUniform1i(is_smooth, 1);
+
             // First draw solid object with polygon offset
             glEnable(GL_POLYGON_OFFSET_FILL);
             glPolygonOffset(1.0f, 1.0f);
@@ -320,6 +327,7 @@ void DisplayFunc(void) {
             glBindVertexArray(vao_IDs[0]);
             glDrawElements(GL_TRIANGLES, data_faces.size(), GL_UNSIGNED_INT, 0);
             glDisable(GL_POLYGON_OFFSET_FILL);
+
             // Then draw wireframe without polygon offset
             glUniform1i(is_wireframe, 1);
             glBindVertexArray(vao_IDs[1]);
@@ -412,8 +420,11 @@ void KeyboardFunc(unsigned char key, int, int) {
             spinner->set_int_val(spinner->get_int_val() - 1);
             gluiRight->sync_live();
             break;
-        case '?':       // Call subdivision function
+        case 's':       // Call subdivision function
             StartSubdivision();
+            break;
+        case 'd':       // Call decimation function
+            StartDecimation();
             break;
     }
     glutPostRedisplay();
@@ -493,9 +504,9 @@ void InitGLUI(void) {
     // Add decimation panel
     GLUI_Panel *decimation_panel = gluiRight->add_panel("Decimation");
     gluiRight->add_column_to_panel(decimation_panel, false);
-    staticText = gluiRight->add_statictext_to_panel(decimation_panel, "Current mesh edges:       ");
-    gluiRight->add_edittext_to_panel(decimation_panel, "K value: ", GLUI_EDITTEXT_INT, &mc_k);
-    gluiRight->add_edittext_to_panel(decimation_panel, "Target edges: ", GLUI_EDITTEXT_INT, &mc_target);
+    staticText = gluiRight->add_statictext_to_panel(decimation_panel, "Current mesh edges:        ");
+    gluiRight->add_edittext_to_panel(decimation_panel, "K value: ", GLUI_EDITTEXT_INT, &decimation_k);
+    gluiRight->add_edittext_to_panel(decimation_panel, "Iteration: ", GLUI_EDITTEXT_INT, &decimation_iteration);
     gluiRight->add_button_to_panel(decimation_panel, "Decimate", 0, (GLUI_Update_CB)StartDecimation);
     gluiRight->add_column_to_panel(decimation_panel, false);
 

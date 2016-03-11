@@ -119,12 +119,12 @@ void ImportMeshFile() {
         mesh_faces.clear();
 
         while (getline(fin, line)) {        // While not end of file
-            TrimLeadingSpace(line);
-            if (line.compare("") == 0) continue;    // If is blank line
+            if (line.find_first_not_of(' ') == string::npos) continue;    // If is blank line
+            TrimLeadingSpace(line);                 // Trim leading space
             if (line[0] == '#') continue;           // If is comment
             if (line[0] == 'f') flag = libconsts::kFlagFace;
             line.erase(0, 2);
-            TrimTailingSpace(line);
+            TrimTailingSpace(line);                 // Trim tailing space
             if (flag == libconsts::kFlagVertex) {       // If this line contains vertex data
                 vector<float> pos;
                 split(line, ' ', pos);
@@ -298,15 +298,17 @@ void InitRenderMeshData() {
     }
 
     for (auto face : mesh_faces) {      // Update faces data for rendering
-        smfparser::W_edge *e0 = face->edge;
-        smfparser::W_edge *edge = e0;
-        do {
-            data_faces.push_back(vertex_index_map[edge->start]);
-            if (edge->left == face)
-                edge = edge->left_next;
-            else
-                edge = edge->right_next;
-        } while (edge != e0);
+        if (face->render_flag != 1) {
+            smfparser::W_edge *e0 = face->edge;
+            smfparser::W_edge *edge = e0;
+            do {
+                data_faces.push_back(vertex_index_map[edge->start]);
+                if (edge->left == face)
+                    edge = edge->left_next;
+                else
+                    edge = edge->right_next;
+            } while (edge != e0);
+        }
     }
 
     for (auto edge : mesh_edges) {      // Update edges data for rendering

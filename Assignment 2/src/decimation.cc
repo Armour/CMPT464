@@ -39,7 +39,7 @@ int decimation_flag = libconsts::kDecimationFlagRun;
 void CalculateFaceK(smfparser::Face *face) {
     if (face->render_flag == 1) return;
     smfparser::W_edge *edge = face->edge;
-    if (edge->left != face) edge = edge->right_next->left_prev;
+    if (edge->left != face) edge = edge->right_next->left_prev;             // Get the three points in the plane
     glm::vec3 v1 = glm::vec3(edge->start->x, edge->start->y, edge->start->z);
     glm::vec3 v2 = glm::vec3(edge->end->x, edge->end->y, edge->end->z);
     glm::vec3 v3 = glm::vec3(edge->left_next->end->x, edge->left_next->end->y, edge->left_next->end->z);
@@ -47,7 +47,7 @@ void CalculateFaceK(smfparser::Face *face) {
     float a = cross.x;
     float b = cross.y;
     float c = cross.z;
-    float d = -(v1.x * a + v1.y * b + v1.z * c);
+    float d = -(v1.x * a + v1.y * b + v1.z * c);        // Get a, b, c, d
     if (glm::isnan(a)) {
         a = 0;
         b = 0;
@@ -55,7 +55,7 @@ void CalculateFaceK(smfparser::Face *face) {
         d = 0;
     }
     if (face->K != nullptr) delete(face->K);
-    face->K = new glm::mat4x4(              // Get K matrix
+    face->K = new glm::mat4x4(                          // Get K matrix
             a * a, a * b, a * c, a * d,
             a * b, b * b, b * c, b * d,
             a * c, b * c, c * c, c * d,
@@ -154,8 +154,8 @@ glm::vec4 CalculatePairVertex(smfparser::W_edge *pair) {
     glm::mat4x4 tmp = Q;
     tmp[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     glm::mat4x4 inverseQ = glm::inverse(tmp);
-    if (glm::isnan(inverseQ[0][0])) {
-        std::cout << "Got nan !!!!!!!!!!!!!!!!" << std::endl;
+    if (glm::isnan(inverseQ[0][0])) {       // If can not inverse matrix, use mid point or two sides vertex
+        std::cout << "Got NAN! (Matrix inverse fail, will use vertex directly)" << std::endl;
         glm::vec4 v1 = glm::vec4(pair->start->x, pair->start->y, pair->start->z, 1.0);
         glm::vec4 v2 = glm::vec4(pair->end->x, pair->end->y, pair->end->z, 1.0);
         glm::vec4 vm = glm::vec4((v1.x + v2.x) / 2, (v1.y + v2.y) / 2, (v1.z + v2.z) / 2, 1.0);
@@ -168,7 +168,7 @@ glm::vec4 CalculatePairVertex(smfparser::W_edge *pair) {
         if (cost1 <= cost2 && cost1 <= costm) return v1;
         if (cost2 <= cost1 && cost2 <= costm) return v2;
         return vm;
-    } else {
+    } else {                                // Normal case
         return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) * inverseQ;
     }
  }
@@ -197,7 +197,7 @@ void CalculatePairCost(smfparser::W_edge *pair) {
 // Function:  CheckChoice
 // ---------------------------
 //
-//   Check the choice of pair
+//   Check the current choice of pair
 //
 //   Parameters:
 //       pair: the pair the we need to check
@@ -213,7 +213,7 @@ bool CheckChoice(smfparser::W_edge *pair) {
     smfparser::Vertex *up = pair->left_prev->start;
     smfparser::Vertex *down = pair->right_next->end;
 
-    // Insert all adjacent node of start vertex into set (except end, up and down)
+    // Insert all neighbor vertex of start vertex into set (except end, up and down)
     smfparser::W_edge *e0 = start->edge;
     smfparser::W_edge *e1 = mesh_edges[make_pair(vertex_index_map[start->edge->end] + 1, vertex_index_map[start->edge->start] + 1)];
     smfparser::W_edge *edge = e0;
@@ -229,21 +229,22 @@ bool CheckChoice(smfparser::W_edge *pair) {
         }
     } while (edge != e0 && edge != e1);
 
-    // Check if start vertex and end vertex has the same neighboor vertex
+    // Check if start vertex and end vertex has the same neighbor vertex
     e0 = end->edge;
     e1 = mesh_edges[make_pair(vertex_index_map[end->edge->end] + 1, vertex_index_map[end->edge->start] + 1)];
     edge = e0;
     do {
         if (edge->end == end) {
-            if (vertex_set.find(edge->start) != vertex_set.end())
+            if (vertex_set.find(edge->start) != vertex_set.end())       // If has same neighbor vertex, return false
                 return false;
             edge = edge->right_prev;
         } else {
-            if (vertex_set.find(edge->end) != vertex_set.end())
+            if (vertex_set.find(edge->end) != vertex_set.end())         // If has same neighbor vertex, return false
                 return false;
             edge = edge->left_prev;
         }
     } while (edge != e0 && edge != e1);
+
     return true;
 }
 
@@ -276,23 +277,26 @@ smfparser::W_edge *MultipleChoice(int k) {
         int time = 0;
         do {
             time++;
-            if (time >= 1000000) {
+            if (time >= libconsts::kDecimationRandomLimit) {            // If random time exceed limit, decimation stop
                 decimation_flag = libconsts::kDecimationFlagStop;
                 break;
             }
             r1 = rand() % mesh_vertex.size() + 1;
             r2 = rand() % mesh_vertex.size() + 1;
-            if (r1 == r2) continue;
-            if (mesh_edges.find(make_pair(r1, r2)) != mesh_edges.end()) {
+            if (r1 == r2) {                     // IF is the same vertex
+                time--;
+                continue;
+            }
+            if (mesh_edges.find(make_pair(r1, r2)) != mesh_edges.end()) {       // If edge exist
                 edge = mesh_edges[make_pair(r1, r2)];
-                if (!CheckChoice(edge)) {
+                if (!CheckChoice(edge)) {       // If this edge can be used in decimation
                    time--;
                    continue;
                 }
                 break;
             }
         } while (true);
-        if (decimation_flag != libconsts::kDecimationFlagStop) {
+        if (decimation_flag != libconsts::kDecimationFlagStop) {        // Push to chosen_pairs array
             CalculatePairCost(edge);
             chosen_pairs.push_back(edge);
         } else {
@@ -305,9 +309,12 @@ smfparser::W_edge *MultipleChoice(int k) {
     if (chosen_pairs.empty()) return nullptr;
     least_cost_pair = chosen_pairs[0];
     for (int i = 1; i < chosen_pairs.size(); i++) {
-        if (chosen_pairs[i]->cost < least_cost_pair->cost)
+        if (chosen_pairs[i]->cost < least_cost_pair->cost) {
             least_cost_pair = chosen_pairs[i];
+        }
     }
+
+    // Return least cost pair
     return least_cost_pair;
 }
 
@@ -334,6 +341,8 @@ void EdgeContractionOnPair(smfparser::W_edge *pair) {
     int v2_index = vertex_index_map[v2] + 1;
     int v_up_index = vertex_index_map[v_up] + 1;
     int v_down_index = vertex_index_map[v_down] + 1;
+
+    // Get vertex position after merge
     glm::vec4 v = CalculatePairVertex(pair);
 
     // Get the edges that need to update prev and next before change them
@@ -376,20 +385,26 @@ void EdgeContractionOnPair(smfparser::W_edge *pair) {
         if (edge->end == v2) {
             smfparser::W_edge *next_edge = edge->right_prev;
             int start_index = vertex_index_map[edge->start] + 1;
-            edge->end = v1;
+            edge->end = v1;                                             // Update edge point to v1
             edge->right_next->left_prev->start = v1;
-            if (start_index == v_down_index) {
+            if (start_index == v_down_index) {                          // If edge is connected with the down vertex
+                delete mesh_edges[make_pair(v1_index, v_down_index)];
                 mesh_edges[make_pair(v1_index, v_down_index)] = edge->right_next->left_prev;
-            } else if (start_index == v_up_index) {
+                delete edge;
+            } else if (start_index == v_up_index) {                     // If edge is connected with the up vertex
+                delete mesh_edges[make_pair(v_up_index, v1_index)];
                 mesh_edges[make_pair(v_up_index, v1_index)] = edge;
-            } else {
+                delete edge->right_next->left_prev;
+            } else {                                                    // Normal edge
                 mesh_edges[make_pair(start_index, v1_index)] = edge;
                 mesh_edges[make_pair(v1_index, start_index)] = edge->right_next->left_prev;
             }
             mesh_edges.erase(make_pair(start_index, v2_index));
             mesh_edges.erase(make_pair(v2_index, start_index));
             edge = next_edge;
-        } else {
+        } else {                                                        // The edge from v1 to v2
+            delete mesh_edges[make_pair(v1_index, v2_index)];
+            delete mesh_edges[make_pair(v2_index, v1_index)];
             mesh_edges.erase(make_pair(v1_index, v2_index));
             mesh_edges.erase(make_pair(v2_index, v1_index));
             edge = edge->left_prev;
@@ -446,15 +461,15 @@ void EdgeContractionOnPair(smfparser::W_edge *pair) {
 
 void QuadricMatricsDecimation(int k, int target) {
     decimation_flag = libconsts::kDecimationFlagRun;
-    CalculateAllFaceK();
+    CalculateAllFaceK();                                    // Calculate all K and Q matrix
     CalculateAllVertexQ();
     for (int i = 0; i < target; i++) {
-        if (mesh_edges.size() / 2 <= 6) break;
-        smfparser::W_edge *pair = MultipleChoice(k);
+        if (mesh_edges.size() / 2 <= 6) break;              // At least 6 edges
+        smfparser::W_edge *pair = MultipleChoice(k);        // Get best choice through multiple choice scheme
         if (pair == nullptr || decimation_flag == libconsts::kDecimationFlagStop) break;
-        EdgeContractionOnPair(pair);
+        EdgeContractionOnPair(pair);                        // Do the edge contraction
     }
-    UpdateRenderMeshData();
+    UpdateRenderMeshData();                                 // Update display data
     UpdateMeshBufferData();
 }
 
