@@ -33,7 +33,7 @@ int main_win;       // The id of main window
 int mesh_type = libconsts::kMeshTypeShadedEdges;        // The type of mesh display
 int import_semaphore = libconsts::kImportLockOff;       // Import semaphore
 int export_semaphore = libconsts::kExportLockOff;       // Export semaphore
-int subdivision_semaphore = libconsts::kSubdivisionLockOff;       // Subdivision semaphore
+int subdivision_semaphore = libconsts::kSubdivisionLockOn;       // Subdivision semaphore
 int decimation_semaphore = libconsts::kDecimationLockOff;         // Decimation semaphore
 int mesh_imported = libconsts::kMeshImportedFalse;      // The mesh import flag (for display)
 int subdivision_type = libconsts::kSubdivisionLoop;     // Subdivision type

@@ -494,7 +494,7 @@ void UpdateWingedEdgeMeshData() {
     for (auto face : face_input) {
         smfparser::Face *new_face = new smfparser::Face();          // Add new face
         new_mesh_faces.push_back(new_face);
-        unsigned long size = face.size();
+        int size = (int)face.size();
         for (int i = 0; i < size; i++) {    // Add all edges around this face
             smfparser::Vertex *st = new_mesh_vertex[face[i] - 1];
             smfparser::Vertex *ed = new_mesh_vertex[face[(i + 1) % size] - 1];

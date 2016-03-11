@@ -63,7 +63,7 @@
 * `t`: change subdivision type
 * `<`: decrease subdivision level
 * `>`: increase subdivision level
-* `s`: **run subdivision**
+* `s`: run subdivision (disabled)
 * `d`: **run decimation**
 * `q`: exit
 * Ps: sometime program has no response to key press, you should click GUI and then click display window, after that the key press should works well. (Seems to be a bug of GLUI?)
@@ -72,8 +72,8 @@
 
 - Cross platform (Clion + Cmake)
 - Following Google C++ Style, well commented
+- Version control using Github
 
 ## Limitation
 
 - Not check fold-over
-- Subdivision and decimation can not work together now (easy to fix)
