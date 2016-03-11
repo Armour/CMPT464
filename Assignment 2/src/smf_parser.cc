@@ -231,6 +231,7 @@ void ExportMeshFile() {
             if (vertex->render_flag == 1) extra_vertex++;
             extra_prefix.push_back(extra_vertex);
         }
+
         for (auto face : mesh_faces)
             if (face->render_flag == 1) extra_face++;
 

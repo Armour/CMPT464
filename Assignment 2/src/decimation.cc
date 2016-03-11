@@ -308,7 +308,7 @@ smfparser::W_edge *MultipleChoice(int k) {
     smfparser::W_edge *least_cost_pair;
     if (chosen_pairs.empty()) return nullptr;
     least_cost_pair = chosen_pairs[0];
-    for (int i = 1; i < chosen_pairs.size(); i++) {
+    for (int i = 1; i < (int)chosen_pairs.size(); i++) {
         if (chosen_pairs[i]->cost < least_cost_pair->cost) {
             least_cost_pair = chosen_pairs[i];
         }

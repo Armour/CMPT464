@@ -18,6 +18,8 @@
 #ifndef SMFVIEW_WINGED_EDGE_H_
 #define SMFVIEW_WINGED_EDGE_H_
 
+#include "lib_gl.h"
+
 namespace smfparser {
 
 struct Vertex;
@@ -47,7 +49,7 @@ struct Vertex {
     glm::mat4x4 *Q;
     float x, y, z;
     int render_flag;
-    Vertex(float x, float y, float z): x(x), y(y), z(z), edge(nullptr), Q(nullptr), render_flag(0) {};         // Default constructor
+    Vertex(float x, float y, float z): edge(nullptr), Q(nullptr), x(x), y(y), z(z), render_flag(0) {};         // Default constructor
 };
 
 // Structure Face
