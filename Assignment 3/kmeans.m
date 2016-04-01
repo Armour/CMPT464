@@ -1,10 +1,8 @@
 function [centroids, idx] = kmeans(X, K, initg)
-% This function runs the K-Means algorithm on data matrix x, where each
-% row of x is a single example. It uses initial_centroids used as the
-% initial centroids, max_iters specifies the total number of interactions
-% of K-Means to execute.
+% This function runs the K-Means algorithm on data matrix X, where each
+% row of x is a single example. Initg is used as the initial centroids. 
 
-% Check initg, if not set then random init centroids
+% Check initg, if not set then we randomly init centroids
 if isempty(initg)
     initg = randomInitCentroids(X, K);
 end
@@ -12,7 +10,7 @@ end
 % Initialize values
 idx = zeros(size(X, 1), 1);
 centroids = initg;
-previous_centroids = centroids / 2; % Make sure initial not the same
+previous_centroids = centroids / 2;     % Make sure initial not the same
 i = 0;
 
 % Run K-Means
