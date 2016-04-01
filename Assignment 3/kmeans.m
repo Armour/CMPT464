@@ -3,7 +3,7 @@ function [centroids, idx] = kmeans(X, K, initg)
 % row of x is a single example. Initg is used as the initial centroids. 
 
 % Check initg, if not set then we randomly init centroids
-if isempty(initg)
+if ~exist('initg', 'var')
     initg = randomInitCentroids(X, K);
 end
 
